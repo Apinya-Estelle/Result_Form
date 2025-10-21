@@ -10,132 +10,184 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Kanit', sans-serif; }
+        .result-card {
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100">
 
-    <!-- Container หลักสำหรับแสดงผลลัพธ์ -->
-    <div id="result-container" class="min-h-screen flex items-center justify-center p-4">
-        <!-- Loading State -->
-        <div id="loading" class="text-center">
-            <h2 class="text-xl font-semibold text-gray-700">กำลังประมวลผล...</h2>
-            <p class="text-gray-500 mt-2">กรุณารอสักครู่ ระบบกำลังวิเคราะห์ข้อมูลของคุณ</p>
+    <div class="container mx-auto px-4 py-8 md:py-12">
+         <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+            
+            <div class="text-center p-6 bg-gray-50 border-b">
+                 <h1 class="text-2xl md:text-3xl font-bold text-gray-800">ค้นหาสาเหตุผมบาง ผมร่วง ผมขาดง่าย ของคุณ</h1>
+            </div>
+
+            <div id="result-container" class="p-6 md:p-10">
+                <!-- Result content will be dynamically generated here -->
+                <div class="text-center p-10">
+                    <p>กำลังวิเคราะห์ผลลัพธ์ของคุณ...</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        window.onload = function() {
-            // ดึงข้อมูลคำตอบจาก URL
-            const params = new URLSearchParams(window.location.search);
-            const answers = {
-                q1: params.get('q1') || '',
-                q2: (params.get('q2') || '').split(';'),
-                q3: (params.get('q3') || '').split(';'),
-                q4: params.get('q4') || '',
-                q5: params.get('q5') || ''
+        document.addEventListener('DOMContentLoaded', () => {
+            const analysisDatabase = {
+                // Question 1: Physical Condition Details
+                "q1": {
+                    "หน้าผากคล้ายตัวM": { problem: "แนวผมด้านหน้าร่น (Receding Hairline)", cause: "อาจเป็นสัญญาณเริ่มต้นของภาวะผมบางจากพันธุกรรม (Androgenetic Alopecia) ซึ่งฮอร์โมน DHT มีผลทำให้รากผมบริเวณหน้าผากและขมับฝ่อตัวลง", solution: "ปรึกษาแพทย์เพื่อพิจารณาการรักษาด้วยยาเฉพาะที่ เช่น Minoxidil หรือยารับประทาน", prevention: "การตรวจพบและเริ่มรักษาตั้งแต่เนิ่นๆ จะช่วยชะลอการลุกลามได้ดีที่สุด" },
+                    "ผมบางกลางกระหม่อม": { problem: "ผมบางบริเวณกลางศีรษะ (Vertex Thinning)", cause: "เป็นลักษณะเด่นของภาวะผมบางจากพันธุกรรมในเพศชาย รากผมบริเวณกลางศีรษะมีความไวต่อฮอร์โมน DHT ทำให้เส้นผมเล็กลงและหลุดร่วงไป", solution: "การรักษาด้วยยา, PRP (Platelet-Rich Plasma), หรือการปลูกผม เป็นทางเลือกที่ให้ผลดี", prevention: "ดูแลสุขภาพโดยรวมและหนังศีรษะให้แข็งแรงเพื่อสนับสนุนการรักษา" },
+                    "ศีรษะล้านด้านหน้า": { problem: "ศีรษะล้านช่วงหน้าอย่างชัดเจน", cause: "มักเป็นระยะลุกลามของภาวะผมบางจากพันธุกรรม ซึ่งรากผมบริเวณด้านหน้าได้ฝ่อตัวไปมากแล้ว", solution: "การปลูกผมถือเป็นวิธีที่ได้ผลที่สุดในการสร้างแนวผมขึ้นมาใหม่ ควบคู่กับการใช้ยาเพื่อรักษาเส้นผมเดิมที่มีอยู่", prevention: "ป้องกันผมส่วนที่ยังเหลืออยู่ไม่ให้ร่วงเพิ่มด้วยการรักษาอย่างต่อเนื่อง" },
+                    "ผมบางบริเวณขวัญ": { problem: "ผมบางบริเวณขวัญ (Crown Thinning)", cause: "คล้ายกับบริเวณกลางศีรษะ เป็นอีกจุดที่รากผมไวต่อฮอร์โมน DHT และเป็นสัญญาณของภาวะผมบางจากพันธุกรรม", solution: "การรักษาตั้งแต่ระยะเริ่มต้นด้วยยาหรือ PRP จะช่วยฟื้นฟูสภาพเส้นผมได้", prevention: "หลีกเลี่ยงพฤติกรรมที่ทำร้ายหนังศีรษะ เช่น การดึงรั้งผมบริเวณนั้นบ่อยๆ" },
+                    "ผมบางตามรอยแสก": { problem: "รอยแสกผมกว้างขึ้น", cause: "เป็นลักษณะเด่นของภาวะผมบางจากพันธุกรรมในเพศหญิง (Female Pattern Hair Loss) เกิดจากการที่เส้นผมในบริเวณนั้นบางลงโดยรวม", solution: "Minoxidil ชนิดสำหรับผู้หญิง, การทำทรีตเมนต์บำรุงหนังศีรษะ, และการปรับสมดุลฮอร์โมน (หากจำเป็น)", prevention: "ทานอาหารที่มีธาตุเหล็กและโปรตีนสูง หลีกเลี่ยงการมัดผมที่ดึงรั้งรอยแสกแน่นเกินไป" },
+                    "ผมบางทั่วศีรษะ": { problem: "ผมร่วงและบางลงทั่วทั้งศีรษะ (Diffuse Thinning)", cause: "อาจเกิดได้จากหลายสาเหตุร่วมกัน เช่น พันธุกรรม, ปัจจัยภายใน (Telogen Effluvium), หรือการขาดสารอาหาร ทำให้ผมร่วงมากกว่าปกติโดยไม่มีรูปแบบที่ชัดเจน", solution: "ควรพบแพทย์เพื่อวินิจฉัยสาเหตุที่แท้จริง อาจต้องตรวจเลือดเพื่อหาสาเหตุและรักษาตามความเหมาะสม", prevention: "การดูแลสุขภาพแบบองค์รวมเป็นสิ่งสำคัญที่สุด ทั้งการกิน การนอน และการจัดการความเครียด" }
+                },
+                // Question 2: Lifestyle Factor Details
+                "q2": {
+                    "ความเครียดสูง": { cause: "ความเครียดเรื้อรังและพักผ่อนไม่เพียงพอ ส่งผลให้รากผมจำนวนมากเข้าสู่ระยะพักตัว (Telogen Phase) พร้อมกัน และหลุดร่วงออกมาใน 2-3 เดือนถัดมา", solution: "จัดการความเครียด เช่น ออกกำลังกาย ทำสมาธิ, นอนหลับให้มีคุณภาพ 7-8 ชั่วโมงต่อคืน", prevention: "สร้างสมดุลระหว่างการทำงานและชีวิตส่วนตัว เพื่อลดระดับความเครียดสะสม" },
+                    "เพิ่งเจ็บป่วยหนัก/ผ่าตัด": { cause: "ร่างกายใช้พลังงานและสารอาหารจำนวนมากเพื่อฟื้นฟูตัวเอง ทำให้สารอาหารไปเลี้ยงรากผมไม่เพียงพอ ส่งผลให้ผมร่วงหลังป่วย 2-3 เดือน", solution: "ทานอาหารบำรุงให้ครบ 5 หมู่ โดยเฉพาะโปรตีนและวิตามิน เส้นผมจะค่อยๆ กลับมางอกใหม่เมื่อร่างกายฟื้นตัวเต็มที่", prevention: "ในช่วงพักฟื้น ควรดูแลตัวเองให้ดีที่สุดเพื่อย่นระยะเวลาการฟื้นตัว" },
+                    "ลดน้ำหนักอย่างรวดเร็ว": { cause: "การขาดสารอาหารอย่างฉับพลัน โดยเฉพาะโปรตีน, ธาตุเหล็ก, และซิงค์ ทำให้ร่างกายช็อกและส่งผลให้ผมร่วงอย่างรุนแรง", solution: "กลับมาทานอาหารให้สมดุลและเพียงพอต่อความต้องการของร่างกาย ผมจะค่อยๆ กลับมาเป็นปกติ", prevention: "ควรลดน้ำหนักอย่างค่อยเป็นค่อยไปและยังคงได้รับสารอาหารที่จำเป็นครบถ้วน" },
+                    "คุณแม่หลังคลอด": { cause: "การเปลี่ยนแปลงของระดับฮอร์โมนเอสโตรเจนที่ลดลงอย่างรวดเร็วหลังคลอด ทำให้เส้นผมที่ควรจะร่วงในช่วงตั้งครรภ์ กลับมาร่วงพร้อมกันในช่วง 3-6 เดือนหลังคลอด", solution: "เป็นภาวะปกติและชั่วคราว ควรบำรุงร่างกายให้เต็มที่ แล้ววงจรเส้นผมจะกลับมาเป็นปกติเองภายใน 1 ปี", prevention: "ทานวิตามินและสารอาหารเสริมสำหรับคุณแม่เพื่อช่วยบำรุงร่างกายและเส้นผม" }
+                },
+                // Question 3: Behavioral Factor Details
+                "q3": {
+                    "ดัด/ยืดผม": { cause: "การใช้สารเคมีรุนแรงเพื่อเปลี่ยนแปลงโครงสร้างเส้นผม ทำให้แกนผมอ่อนแอ เปราะ และฉีกขาดได้ง่าย", solution: "เว้นระยะห่างในการทำเคมีให้นานขึ้น (มากกว่า 6 เดือน), ใช้ผลิตภัณฑ์ฟื้นฟูเคราตินและโปรตีนให้เส้นผม", prevention: "เลือกใช้บริการกับช่างที่เชี่ยวชาญและใช้ผลิตภัณฑ์ที่มีคุณภาพ" },
+                    "กัดสี/ทำสีผม": { cause: "สารเคมีในการฟอกสีและย้อมสีจะเปิดเกล็ดผมและทำลายเม็ดสี ทำให้ผมแห้งเสีย สูญเสียความชุ่มชื้น และขาดง่าย", solution: "ทำทรีตเมนต์เข้มข้นเป็นประจำ (Olaplex, K18), ใช้ผลิตภัณฑ์สำหรับผมทำสีโดยเฉพาะ, ลดความถี่ในการทำ", prevention: "พยายามเลือกทำสีที่ไม่ต้องใช้การฟอกสีรุนแรง หรือทำเฉพาะส่วน เช่น ไฮไลต์" },
+                    "ใช้ความร้อนกับผม": { cause: "ความร้อนสูงจากไดร์, ที่หนีบ, ที่ม้วนผม จะทำลายโปรตีนเคราตินในเส้นผมและระเหยความชุ่มชื้นออกไป ทำให้ผมแห้งกรอบและแตกปลาย", solution: "ใช้สเปรย์กันความร้อนทุกครั้งก่อนจัดแต่งทรง, ปรับลดอุณหภูมิของอุปกรณ์ลง, พยายามปล่อยให้ผมแห้งเองบ้าง", prevention: "จำกัดการใช้อุปกรณ์ความร้อนไม่เกิน 2-3 ครั้งต่อสัปดาห์" }
+                }
             };
 
-            const lineOA_ID = "@drtophair";
+            const params = new URLSearchParams(window.location.search);
+            const answers = {
+                q1: params.get('q1'),
+                q2: params.get('q2')?.split(';') || [],
+                q3: params.get('q3')?.split(';') || [],
+                q5: params.get('q5')
+            };
 
-            // --- ตรรกะการให้คะแนนที่ปรับปรุงใหม่ ---
             let geneticScore = 0;
             let behaviorScore = 0;
 
-            // วิเคราะห์ข้อ 1: สภาพเส้นผม (ตัวชี้วัดหลัก)
-            if (answers.q1.includes('แนวไรผมด้านหน้าเถิกร่นสูงขึ้น') || answers.q1.includes('ผมบางลงบริเวณกลางศีรษะ')) {
-                geneticScore += 3; // สัญญาณชัดเจนของ AGA
-            } else if (answers.q1.includes('ผมร่วงเป็นหย่อมๆ')) {
-                geneticScore += 2; // อาจเป็น Alopecia Areata
-            } else if (answers.q1.includes('เส้นผมแห้งเสีย เปราะบาง ขาดง่ายกลางเส้น')) {
-                behaviorScore += 3; // สัญญาณชัดเจนของผมเสียจากภายนอก
-            } else if (answers.q1.includes('ผมร่วงเยอะผิดปกติทั่วทั้งศีรษะ')) {
-                behaviorScore += 2; // มักเป็น Telogen Effluvium จากความเครียด/พฤติกรรม
-            } else if (answers.q1.includes('ผมบางลงโดยรวมทั่วศีรษะ')) {
+            // Scoring Logic
+            const geneticKeywords = ["หน้าผากคล้ายตัวM", "ผมบางกลางกระหม่อม", "ศีรษะล้านด้านหน้า", "ผมบางบริเวณขวัญ", "ผมบางตามรอยแสก"];
+            if (geneticKeywords.includes(answers.q1)) {
+                geneticScore += 3;
+            }
+             if (answers.q1 === "ผมบางทั่วศีรษะ") {
                 geneticScore += 1;
-                behaviorScore += 1; // อาจเป็นได้ทั้งสองอย่าง
+                behaviorScore += 1;
             }
 
-            // วิเคราะห์ข้อ 2: พฤติกรรม
-            answers.q2.forEach(action => {
-                if (action.includes('กัดสีผม') || action.includes('ดัดผม') || action.includes('เป่าผม')) {
-                    behaviorScore += 1;
-                }
-            });
+            if (answers.q5 === "1 - 3 ปี" || answers.q5 === "มากกว่า 3 ปี") {
+                geneticScore += 1;
+            }
 
-            // วิเคราะห์ข้อ 5: ระยะเวลา
-            if (answers.q5.includes('1 - 3 ปี') || answers.q5.includes('มากกว่า 3 ปี')) {
-                geneticScore += 1; // ปัญหานานมักเกี่ยวกับพันธุกรรม
-            } else if (answers.q5.includes('น้อยกว่า 6 เดือน')) {
-                behaviorScore += 1; // ปัญหาเพิ่งเกิดมักเกี่ยวกับพฤติกรรม
+            if (answers.q2.length > 0 && answers.q2[0] !== "ไม่ได้เลือก" && answers.q2[0] !== "ไม่มีปัจจัยดังกล่าว") {
+                behaviorScore += answers.q2.length; 
+            }
+             if (answers.q3.length > 0 && answers.q3[0] !== "ไม่ได้เลือก" && answers.q3[0] !== "ไม่ได้ทำอะไรเป็นพิเศษ") {
+                behaviorScore += answers.q3.length * 1.5;
             }
             
-            // --- เก็บ Template ของผลลัพธ์ ---
-            const resultTemplates = {
-                behavior: {
-                    title: "พฤติกรรม",
-                    colorClass: "blue",
-                    description: "จากการวิเคราะห์ พบว่าการใช้ความร้อนและสารเคมีเป็นประจำ อาจเป็นปัจจัยหลักที่ทำให้โครงสร้างผมอ่อนแอและขาดร่วงง่าย แต่ข่าวดีคือ ปัญหาเหล่านี้สามารถฟื้นฟูและแก้ไขได้อย่างตรงจุดครับ",
-                    icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a1 1 0 000 1.414l2.879 2.879a1 1 0 001.414 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4.879 4.879L9.757 9.757m0 0L7 12.515M9.757 9.757l2.758-2.758" /></svg>`,
-                    ctaText: "คุยกับผู้เชี่ยวชาญเพื่อวางแผนฟื้นฟู"
-                },
-                genetics: {
-                    title: "พันธุกรรม",
-                    colorClass: "indigo",
-                    description: "มีแนวโน้มว่าปัจจัยภายใน เช่น ฮอร์โมนและพันธุกรรม อาจเป็นสาเหตุหลัก การเข้าใจถึงต้นตอของปัญหาคือขั้นตอนที่สำคัญที่สุดในการเริ่มต้นดูแลอย่างถูกวิธีและยั่งยืน",
-                    icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2m14-4a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-                    ctaText: "ปรึกษาผู้เชี่ยวชาญเพื่อรับคำแนะนำ"
+            const mainCategory = geneticScore > behaviorScore ? "พันธุกรรม" : "พฤติกรรมและปัจจัยภายนอก";
+            
+            // Build Result HTML
+            let problemText = analysisDatabase.q1[answers.q1]?.problem || "ไม่สามารถระบุลักษณะปัญหาได้";
+            
+            let causesHtml = '<ul>';
+            let solutionsHtml = '<ul>';
+            let preventionsHtml = '<ul>';
+            const addedItems = new Set();
+
+            const addItem = (type, text) => {
+                if (text && !addedItems.has(text)) {
+                    const html = `<li class="mb-2 pl-6 relative before:content-['•'] before:absolute before:left-0 before:top-1 before:text-blue-500 before:font-bold">${text}</li>`;
+                    if (type === 'cause') causesHtml += html;
+                    if (type === 'solution') solutionsHtml += html;
+                    if (type === 'prevention') preventionsHtml += html;
+                    addedItems.add(text);
                 }
             };
 
-            // --- การตัดสินใจและสร้างผลลัพธ์ ---
-            // ถ้าคะแนนเท่ากัน ให้เอนไปทางพฤติกรรมซึ่งแก้ไขง่ายกว่า
-            const resultType = (behaviorScore >= geneticScore) ? 'behavior' : 'genetics';
-            const finalResult = resultTemplates[resultType];
+            // Add items from Q1
+            addItem('cause', analysisDatabase.q1[answers.q1]?.cause);
+            addItem('solution', analysisDatabase.q1[answers.q1]?.solution);
+            addItem('prevention', analysisDatabase.q1[answers.q1]?.prevention);
 
-            // สร้าง HTML แบบไดนามิก
-            const resultHTML = `
-                <div class="max-w-2xl w-full bg-white rounded-2xl shadow-lg p-8 md:p-10 text-center animate-fade-in">
-                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-${finalResult.colorClass}-100 mb-5">
-                        ${finalResult.icon}
+            // Add items from Q2
+            answers.q2.forEach(key => {
+                const data = analysisDatabase.q2[key];
+                if (data) {
+                    addItem('cause', data.cause);
+                    addItem('solution', data.solution);
+                    addItem('prevention', data.prevention);
+                }
+            });
+
+            // Add items from Q3
+            answers.q3.forEach(key => {
+                const data = analysisDatabase.q3[key];
+                if (data) {
+                    addItem('cause', data.cause);
+                    addItem('solution', data.solution);
+                    addItem('prevention', data.prevention);
+                }
+            });
+
+            causesHtml += '</ul>';
+            solutionsHtml += '</ul>';
+            preventionsHtml += '</ul>';
+
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.innerHTML = `
+                <div class="result-card text-center mb-8">
+                    <p class="text-gray-600">ผลการประเมินเบื้องต้นของคุณชี้ว่า ปัญหามีแนวโน้มมาจาก</p>
+                    <h2 class="text-3xl font-bold mt-2 ${mainCategory === 'พันธุกรรม' ? 'text-red-600' : 'text-blue-600'}">${mainCategory}</h2>
+                    <p class="mt-4 text-gray-700 max-w-2xl mx-auto">อย่างไรก็ตาม นี่เป็นเพียงการประเมินเบื้องต้นจากข้อมูลที่คุณให้มา ด้านล่างนี้คือรายละเอียดเชิงลึกที่สอดคล้องกับคำตอบของคุณโดยเฉพาะ</p>
+                </div>
+
+                <div class="result-card space-y-6 bg-gray-50 p-6 rounded-lg">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-gray-200 pb-2 mb-3">ลักษณะปัญหาที่พบ</h3>
+                        <p class="text-gray-700">${problemText}</p>
                     </div>
-                    <p class="text-sm font-semibold text-${finalResult.colorClass}-600 uppercase">ผลการประเมินเบื้องต้น</p>
-                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mt-2">
-                        แนวโน้มผมบางจาก <span class="text-${finalResult.colorClass}-600">${finalResult.title}</span>
-                    </h1>
-                    <p class="text-gray-600 mt-4 max-w-lg mx-auto">${finalResult.description}</p>
-                    <div class="mt-8 bg-gray-100 rounded-xl p-6">
-                        <h2 class="text-xl font-bold text-gray-800">เริ่มรักษาอย่างเป็นระบบ</h2>
-                        <p class="text-gray-700 mt-2">"ให้ทุกครั้งที่สางผม เจอกับความหนานุ่ม เหมือนที่เราเคยเป็น"</p>
-                        <button id="cta-button" class="w-full md:w-auto mt-5 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
-                            ${finalResult.ctaText}
-                        </button>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-gray-200 pb-2 mb-3">สาเหตุที่เป็นไปได้</h3>
+                        <div class="text-gray-700">${causesHtml}</div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-gray-200 pb-2 mb-3">แนวทางการดูแลและแก้ไข</h3>
+                        <div class="text-gray-700">${solutionsHtml}</div>
+                    </div>
+                     <div>
+                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-gray-200 pb-2 mb-3">การป้องกันในระยะยาว</h3>
+                        <div class="text-gray-700">${preventionsHtml}</div>
                     </div>
                 </div>
+
+                <div class="result-card text-center mt-10 p-6 bg-blue-50 rounded-lg">
+                     <h2 class="text-2xl font-bold text-gray-800">เริ่มรักษาอย่างเป็นระบบ</h2>
+                     <p class="mt-3 text-gray-600">ให้ทุกครั้งที่สางผม เจอกับความหนานุ่ม เหมือนที่เราเคยเป็น</p>
+                     <a href="https://line.me/ti/p/~@drtophair" target="_blank" class="mt-6 inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-10 rounded-full transition duration-300 transform hover:scale-105">
+                        คุยกับทีมของเราเพื่อรับคำปรึกษา
+                     </a>
+                </div>
             `;
-
-            // แสดงผลลัพธ์ใน Container
-            const container = document.getElementById('result-container');
-            container.innerHTML = resultHTML;
-
-            // ตั้งค่าปุ่ม CTA
-            document.getElementById('cta-button').addEventListener('click', function() {
-                const summary = `
-ผลการประเมินของฉัน:
---------------------
-1. สภาพเส้นผม: ${answers.q1}
-2. พฤติกรรม 1 ปี: ${params.get('q2').replace(/;/g, ', ')}
-3. การดูแลปัจจุบัน: ${params.get('q3').replace(/;/g, ', ')}
-4. ความมั่นใจ: ${answers.q4}
-5. ระยะเวลา: ${answers.q5}
---------------------
-ประเภทผลลัพธ์: ${finalResult.title}
-สนใจปรึกษาเพิ่มเติมค่ะ
-                `.trim().replace(/^\s+/gm, '');
-                
-                const lineUrl = `https://line.me/R/oaMessage/${lineOA_ID}/?${encodeURIComponent(summary)}`;
-                window.location.href = lineUrl;
-            });
-        };
+        });
     </script>
 </body>
 </html>
